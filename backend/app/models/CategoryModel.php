@@ -9,13 +9,13 @@ class CategoryModel extends Model
 {
 
     protected $table = 'categories';
-    protected $primaryKey = 'id';
+    protected string $primaryKey = 'id';
 
     /**
      * Get all active categories with book count
      * @return array
      */
-    public function getActiveCategories()
+    public function getActiveCategories(): array
     {
         $sql = "SELECT c.*, COUNT(b.id) as book_count
                 FROM categories c
@@ -33,9 +33,9 @@ class CategoryModel extends Model
      * @param string $slug
      * @return object|null
      */
-    public function getBySlug($slug)
+    public function getBySlug(string $slug): ?object
     {
-        $this->db->query("SELECT * FROM {$this->table} WHERE slug = :slug AND is_active = 1");
+        $this->db->query("SELECT * FROM $this->table WHERE slug = :slug AND is_active = 1");
         $this->db->bind(':slug', $slug);
         return $this->db->single();
     }

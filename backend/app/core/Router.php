@@ -8,8 +8,8 @@
 class Router
 {
 
-    private $routes = [];
-    private $params = [];
+    private array $routes = [];
+    private array $params = [];
 
     /**
      * Add route
@@ -17,15 +17,16 @@ class Router
      * @param string $route
      * @param array $params
      */
-    public function addRoute($method, $route, $params = [])
+    public function addRoute(string $method, string $route, array $params = []): void
     {
         $this->routes[strtoupper($method)][$route] = $params;
     }
 
     /**
      * Dispatch request
+     * @throws Exception
      */
-    public function dispatch()
+    public function dispatch(): void
     {
         $method = $_SERVER['REQUEST_METHOD'];
         $url = $this->getCurrentUrl();
@@ -52,10 +53,10 @@ class Router
      * @param string $url
      * @return bool
      */
-    private function matchRoute($route, $url)
+    private function matchRoute(string $route, string $url): bool
     {
         $route = preg_replace('/\//', '\\/', $route);
-        $route = preg_replace('/\{([a-z]+)\}/', '(?P<\1>[a-z0-9-]+)', $route);
+        $route = preg_replace('/\{([a-z]+)}/', '(?P<\1>[a-z0-9-]+)', $route);
         $route = '/^' . $route . '$/i';
 
         if (preg_match($route, $url, $matches)) {
@@ -72,8 +73,9 @@ class Router
 
     /**
      * Execute controller method
+     * @throws Exception
      */
-    private function executeController()
+    private function executeController(): void
     {
         $controller = $this->params['controller'] ?? 'Home';
         $action = $this->params['action'] ?? 'index';
@@ -97,7 +99,7 @@ class Router
      * Get current URL
      * @return string
      */
-    private function getCurrentUrl()
+    private function getCurrentUrl(): string
     {
         $url = $_SERVER['REQUEST_URI'];
         $url = str_replace('/backend/public', '', $url);

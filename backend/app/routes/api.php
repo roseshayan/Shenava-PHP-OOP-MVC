@@ -4,6 +4,8 @@
  * Define all API endpoints
  */
 
+global $router;
+
 $router->addRoute('POST', '/api/v1/auth/register', ['controller' => 'Auth', 'action' => 'register']);
 $router->addRoute('POST', '/api/v1/auth/login', ['controller' => 'Auth', 'action' => 'login']);
 

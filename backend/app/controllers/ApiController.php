@@ -6,7 +6,7 @@
 
 class ApiController extends Controller {
 
-    protected $auth;
+    protected Auth $auth;
 
     /**
      * Constructor
@@ -20,7 +20,8 @@ class ApiController extends Controller {
      * Get pagination parameters from request
      * @return array
      */
-    protected function getPaginationParams() {
+    protected function getPaginationParams(): array
+    {
         $page = max(1, intval($_GET['page'] ?? 1));
         $limit = min(50, max(1, intval($_GET['limit'] ?? 20)));
         $offset = ($page - 1) * $limit;

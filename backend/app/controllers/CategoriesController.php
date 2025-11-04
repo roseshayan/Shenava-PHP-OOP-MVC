@@ -7,7 +7,7 @@
 class CategoriesController extends ApiController
 {
 
-    private $categoryModel;
+    private CategoryModel $categoryModel;
 
     /**
      * Constructor

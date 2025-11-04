@@ -8,12 +8,13 @@
 class Database
 {
 
-    private $pdo;
+    private PDO $pdo;
     private $stmt;
-    private $error;
+    private string $error;
 
     /**
      * Constructor - connect to database
+     * @throws Exception
      */
     public function __construct()
     {
@@ -38,7 +39,7 @@ class Database
      * Prepare statement
      * @param string $sql
      */
-    public function query($sql)
+    public function query(string $sql): void
     {
         $this->stmt = $this->pdo->prepare($sql);
     }
@@ -47,24 +48,17 @@ class Database
      * Bind parameters
      * @param mixed $param
      * @param mixed $value
-     * @param int $type
+     * @param int|null $type
      */
-    public function bind($param, $value, $type = null)
+    public function bind(mixed $param, mixed $value, int $type = null): void
     {
         if (is_null($type)) {
-            switch (true) {
-                case is_int($value):
-                    $type = PDO::PARAM_INT;
-                    break;
-                case is_bool($value):
-                    $type = PDO::PARAM_BOOL;
-                    break;
-                case is_null($value):
-                    $type = PDO::PARAM_NULL;
-                    break;
-                default:
-                    $type = PDO::PARAM_STR;
-            }
+            $type = match (true) {
+                is_int($value) => PDO::PARAM_INT,
+                is_bool($value) => PDO::PARAM_BOOL,
+                is_null($value) => PDO::PARAM_NULL,
+                default => PDO::PARAM_STR,
+            };
         }
 
         $this->stmt->bindValue($param, $value, $type);
@@ -73,8 +67,9 @@ class Database
     /**
      * Execute prepared statement
      * @return bool
+     * @throws Exception
      */
-    public function execute()
+    public function execute(): bool
     {
         try {
             return $this->stmt->execute();
@@ -86,18 +81,20 @@ class Database
     /**
      * Get result set as array
      * @return array
+     * @throws Exception
      */
-    public function resultSet()
+    public function resultSet(): array
     {
         $this->execute();
         return $this->stmt->fetchAll();
     }
 
     /**
-     * Get single record
+     * Get a single record
      * @return object
+     * @throws Exception
      */
-    public function single()
+    public function single(): object
     {
         $this->execute();
         return $this->stmt->fetch();
@@ -107,7 +104,7 @@ class Database
      * Get row count
      * @return int
      */
-    public function rowCount()
+    public function rowCount(): int
     {
         return $this->stmt->rowCount();
     }
@@ -116,7 +113,7 @@ class Database
      * Get last insert ID
      * @return string
      */
-    public function lastInsertId()
+    public function lastInsertId(): string
     {
         return $this->pdo->lastInsertId();
     }
@@ -124,7 +121,7 @@ class Database
     /**
      * Begin transaction
      */
-    public function beginTransaction()
+    public function beginTransaction(): bool
     {
         return $this->pdo->beginTransaction();
     }
@@ -132,7 +129,7 @@ class Database
     /**
      * Commit transaction
      */
-    public function commit()
+    public function commit(): bool
     {
         return $this->pdo->commit();
     }
@@ -140,7 +137,7 @@ class Database
     /**
      * Rollback transaction
      */
-    public function rollback()
+    public function rollback(): bool
     {
         return $this->pdo->rollback();
     }

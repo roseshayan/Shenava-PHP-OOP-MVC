@@ -8,16 +8,16 @@ class UserModel extends Model
 {
 
     protected $table = 'users';
-    protected $primaryKey = 'id';
+    protected string $primaryKey = 'id';
 
     /**
      * Find user by email
      * @param string $email
      * @return object|null
      */
-    public function findByEmail($email)
+    public function findByEmail(string $email): ?object
     {
-        $this->db->query("SELECT * FROM {$this->table} WHERE email = :email");
+        $this->db->query("SELECT * FROM $this->table WHERE email = :email");
         $this->db->bind(':email', $email);
         return $this->db->single();
     }
@@ -27,9 +27,9 @@ class UserModel extends Model
      * @param string $username
      * @return object|null
      */
-    public function findByUsername($username)
+    public function findByUsername(string $username): ?object
     {
-        $this->db->query("SELECT * FROM {$this->table} WHERE username = :username");
+        $this->db->query("SELECT * FROM $this->table WHERE username = :username");
         $this->db->bind(':username', $username);
         return $this->db->single();
     }
@@ -40,7 +40,7 @@ class UserModel extends Model
      * @param array $preferences
      * @return bool
      */
-    public function updatePreferences($userId, $preferences)
+    public function updatePreferences(int $userId, array $preferences): bool
     {
         $allowedFields = [
             'dark_mode',
@@ -49,12 +49,9 @@ class UserModel extends Model
             'driving_mode'
         ];
 
-        $data = [];
-        foreach ($preferences as $key => $value) {
-            if (in_array($key, $allowedFields)) {
-                $data[$key] = $value;
-            }
-        }
+        $data = array_filter($preferences, function ($key) use ($allowedFields) {
+            return in_array($key, $allowedFields);
+        }, ARRAY_FILTER_USE_KEY);
 
         return $this->update($userId, $data);
     }
@@ -65,7 +62,7 @@ class UserModel extends Model
      * @param array $options
      * @return array
      */
-    public function getFavorites($userId, $options = [])
+    public function getFavorites(int $userId, array $options = []): array
     {
         $limit = $options['limit'] ?? 20;
         $offset = $options['offset'] ?? 0;
@@ -92,8 +89,9 @@ class UserModel extends Model
      * @param int $userId
      * @param int $bookId
      * @return bool
+     * @throws Exception
      */
-    public function addFavorite($userId, $bookId)
+    public function addFavorite(int $userId, int $bookId): bool
     {
         $this->db->query("INSERT IGNORE INTO user_favorites (user_id, book_id) VALUES (:user_id, :book_id)");
         $this->db->bind(':user_id', $userId);
@@ -106,8 +104,9 @@ class UserModel extends Model
      * @param int $userId
      * @param int $bookId
      * @return bool
+     * @throws Exception
      */
-    public function removeFavorite($userId, $bookId)
+    public function removeFavorite(int $userId, int $bookId): bool
     {
         $this->db->query("DELETE FROM user_favorites WHERE user_id = :user_id AND book_id = :book_id");
         $this->db->bind(':user_id', $userId);
@@ -121,11 +120,11 @@ class UserModel extends Model
      * @param int $bookId
      * @return bool
      */
-    public function isFavorite($userId, $bookId)
+    public function isFavorite(int $userId, int $bookId): bool
     {
         $this->db->query("SELECT id FROM user_favorites WHERE user_id = :user_id AND book_id = :book_id");
         $this->db->bind(':user_id', $userId);
         $this->db->bind(':book_id', $bookId);
-        return $this->db->single() !== false;
+        return $this->db->single() != false;
     }
 }

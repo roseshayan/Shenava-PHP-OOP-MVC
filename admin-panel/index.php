@@ -21,16 +21,32 @@ $bookModel = new BookModel();
 
 // Get total counts
 $db->query("SELECT COUNT(*) as total FROM users");
-$totalUsers = $db->single()->total;
+try {
+    $totalUsers = $db->single()->total;
+} catch (Exception $e) {
+
+}
 
 $db->query("SELECT COUNT(*) as total FROM books WHERE is_active = 1");
-$totalBooks = $db->single()->total;
+try {
+    $totalBooks = $db->single()->total;
+} catch (Exception $e) {
+
+}
 
 $db->query("SELECT COUNT(*) as total FROM categories WHERE is_active = 1");
-$totalCategories = $db->single()->total;
+try {
+    $totalCategories = $db->single()->total;
+} catch (Exception $e) {
+
+}
 
 $db->query("SELECT COUNT(*) as total FROM listening_history WHERE DATE(created_at) = CURDATE()");
-$todayPlays = $db->single()->total;
+try {
+    $todayPlays = $db->single()->total;
+} catch (Exception $e) {
+
+}
 
 // Get recent books
 $db->query("SELECT b.*, a.name as author_name, c.name as category_name 
@@ -39,7 +55,11 @@ $db->query("SELECT b.*, a.name as author_name, c.name as category_name
            LEFT JOIN categories c ON b.category_id = c.id 
            ORDER BY b.created_at DESC 
            LIMIT 5");
-$recentBooks = $db->resultSet();
+try {
+    $recentBooks = $db->resultSet();
+} catch (Exception $e) {
+
+}
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">

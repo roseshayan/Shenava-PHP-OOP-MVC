@@ -32,7 +32,7 @@ class AuthController extends ApiController
             return $this->success($user, 'User registered successfully', 201);
 
         } catch (Exception $e) {
-            return $this->error($e->getMessage(), 400);
+            return $this->error($e->getMessage());
         }
     }
 
@@ -65,7 +65,7 @@ class AuthController extends ApiController
             return $this->success($user, 'Login successful');
 
         } catch (Exception $e) {
-            return $this->error($e->getMessage(), 400);
+            return $this->error($e->getMessage());
         }
     }
 }

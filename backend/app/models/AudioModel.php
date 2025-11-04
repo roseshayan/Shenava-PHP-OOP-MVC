@@ -9,7 +9,7 @@ class AudioModel extends Model
 {
 
     protected $table = 'chapters';
-    protected $primaryKey = 'id';
+    protected string $primaryKey = 'id';
 
     /**
      * Get chapter by UUID

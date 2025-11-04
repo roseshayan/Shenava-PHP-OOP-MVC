@@ -1,4 +1,7 @@
 <?php
+
+use JetBrains\PhpStorm\NoReturn;
+
 /**
  * Shenava - Base Controller Class
  * Provides common functionality for all controllers
@@ -7,8 +10,8 @@
 class Controller
 {
 
-    protected $db;
-    protected $config;
+    protected Database $db;
+    protected mixed $config;
 
     /**
      * Constructor
@@ -23,7 +26,8 @@ class Controller
      * @param mixed $data
      * @param int $statusCode
      */
-    protected function jsonResponse($data, $statusCode = 200)
+    #[NoReturn]
+    protected function jsonResponse(mixed $data, int $statusCode = 200): void
     {
         http_response_code($statusCode);
         header('Content-Type: application/json');
@@ -33,11 +37,12 @@ class Controller
 
     /**
      * Send success response
-     * @param mixed $data
+     * @param mixed|null $data
      * @param string $message
      * @param int $statusCode
      */
-    protected function success($data = null, $message = 'Success', $statusCode = 200)
+    #[NoReturn]
+    protected function success(mixed $data = null, string $message = 'Success', int $statusCode = 200): void
     {
         $response = [
             'status' => 'success',
@@ -51,9 +56,10 @@ class Controller
      * Send error response
      * @param string $message
      * @param int $statusCode
-     * @param mixed $errors
+     * @param mixed|null $errors
      */
-    protected function error($message = 'Error', $statusCode = 400, $errors = null)
+    #[NoReturn]
+    protected function error(string $message = 'Error', int $statusCode = 400, mixed $errors = null): void
     {
         $response = [
             'status' => 'error',
@@ -67,11 +73,11 @@ class Controller
      * Get request data
      * @return array
      */
-    protected function getRequestData()
+    protected function getRequestData(): array
     {
         $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 
-        if (strpos($contentType, 'application/json') !== false) {
+        if (str_contains($contentType, 'application/json')) {
             $input = file_get_contents('php://input');
             return json_decode($input, true) ?? [];
         }
@@ -85,13 +91,13 @@ class Controller
      * @param array $requiredFields
      * @return array|bool
      */
-    protected function validateRequired($data, $requiredFields)
+    protected function validateRequired(array $data, array $requiredFields): bool|array
     {
         $errors = [];
 
         foreach ($requiredFields as $field) {
             if (empty($data[$field])) {
-                $errors[] = "The field '{$field}' is required.";
+                $errors[] = "The field '$field' is required.";
             }
         }
 
@@ -102,7 +108,7 @@ class Controller
      * Generate UUID v4
      * @return string
      */
-    protected function generateUuid()
+    protected function generateUuid(): string
     {
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
             mt_rand(0, 0xffff), mt_rand(0, 0xffff),
@@ -116,9 +122,9 @@ class Controller
     /**
      * Sanitize input data
      * @param mixed $data
-     * @return mixed
+     * @return array|string
      */
-    protected function sanitize($data)
+    protected function sanitize(mixed $data): array|string
     {
         if (is_array($data)) {
             return array_map([$this, 'sanitize'], $data);

@@ -278,7 +278,7 @@ $categories = $categoryModel->getActiveCategories();
         // Initialize DataTable
         $('#booksTable').DataTable({
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/fa.json'
+                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fa.json'
             },
             ordering: false, // Disable default sorting
             info: false, // Remove "Showing X of Y entries"

@@ -10,7 +10,7 @@ class Autoloader
     /**
      * Register autoloader
      */
-    public function register()
+    public function register(): void
     {
         spl_autoload_register([$this, 'loadClass']);
     }
@@ -19,7 +19,7 @@ class Autoloader
      * Load class file
      * @param string $className
      */
-    public function loadClass($className)
+    public function loadClass(string $className): void
     {
         // Convert namespace to file path
         $className = str_replace('\\', '/', $className);

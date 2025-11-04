@@ -8,14 +8,14 @@ class BookModel extends Model
 {
 
     protected $table = 'books';
-    protected $primaryKey = 'id';
+    protected string $primaryKey = 'id';
 
     /**
      * Get books with pagination and filters
      * @param array $filters
      * @return array
      */
-    public function getBooks($filters = [])
+    public function getBooks(array $filters = []): array
     {
         $limit = $filters['limit'] ?? 20;
         $offset = $filters['offset'] ?? 0;
@@ -44,7 +44,7 @@ class BookModel extends Model
 
         if ($search) {
             $sql .= " AND (b.title LIKE :search OR b.description LIKE :search OR a.name LIKE :search)";
-            $params[':search'] = "%{$search}%";
+            $params[':search'] = "%$search%";
         }
 
         if ($featured) {
@@ -69,7 +69,7 @@ class BookModel extends Model
      * @param string $uuid
      * @return object|null
      */
-    public function getBookByUuid($uuid)
+    public function getBookByUuid(string $uuid): ?object
     {
         $sql = "SELECT b.*, 
                        a.name as author_name, 
@@ -96,7 +96,7 @@ class BookModel extends Model
      * @param int $bookId
      * @return array
      */
-    public function getChapters($bookId)
+    public function getChapters(int $bookId): array
     {
         $this->db->query("SELECT * FROM chapters WHERE book_id = :book_id ORDER BY sort_order, chapter_number");
         $this->db->bind(':book_id', $bookId);
@@ -108,7 +108,7 @@ class BookModel extends Model
      * @param int $limit
      * @return array
      */
-    public function getFeaturedBooks($limit = 10)
+    public function getFeaturedBooks(int $limit = 10): array
     {
         $this->db->query("SELECT b.*, a.name as author_name, c.name as category_name
                          FROM books b
@@ -127,7 +127,7 @@ class BookModel extends Model
      * @param array $options
      * @return array
      */
-    public function getBooksByCategory($categorySlug, $options = [])
+    public function getBooksByCategory(string $categorySlug, array $options = []): array
     {
         $limit = $options['limit'] ?? 20;
         $offset = $options['offset'] ?? 0;
@@ -152,8 +152,9 @@ class BookModel extends Model
      * Increment book views
      * @param int $bookId
      * @return bool
+     * @throws Exception
      */
-    public function incrementViews($bookId)
+    public function incrementViews(int $bookId): bool
     {
         $this->db->query("UPDATE books SET total_views = total_views + 1 WHERE id = :id");
         $this->db->bind(':id', $bookId);

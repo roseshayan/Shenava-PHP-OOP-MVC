@@ -7,8 +7,8 @@
 class BooksController extends ApiController
 {
 
-    private $bookModel;
-    private $categoryModel;
+    private BookModel $bookModel;
+    private CategoryModel $categoryModel;
 
     /**
      * Constructor
@@ -58,7 +58,7 @@ class BooksController extends ApiController
     }
 
     /**
-     * Get single book by UUID
+     * Get a single book by UUID
      */
     public function show($params)
     {

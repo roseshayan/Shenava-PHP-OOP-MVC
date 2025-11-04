@@ -7,8 +7,8 @@
 class Auth
 {
 
-    private $userModel;
-    private $config;
+    private UserModel $userModel;
+    private mixed $config;
 
     /**
      * Constructor
@@ -24,8 +24,9 @@ class Auth
      * @param string $email
      * @param string $password
      * @return array|bool
+     * @throws Exception
      */
-    public function login($email, $password)
+    public function login(string $email, string $password): bool|array
     {
         $user = $this->userModel->findByEmail($email);
 
@@ -47,15 +48,16 @@ class Auth
      * Register new user
      * @param array $userData
      * @return array
+     * @throws Exception
      */
-    public function register($userData)
+    public function register(array $userData): array
     {
         // Check if email exists
         if ($this->userModel->findByEmail($userData['email'])) {
             throw new Exception('Email already registered');
         }
 
-        // Check if username exists
+        // Check if the username exists
         if ($this->userModel->findByUsername($userData['username'])) {
             throw new Exception('Username already taken');
         }
@@ -83,7 +85,7 @@ class Auth
      * @param string $password
      * @return string
      */
-    private function hashPassword($password)
+    private function hashPassword(string $password): string
     {
         return password_hash($password, PASSWORD_BCRYPT, [
             'cost' => $this->config['security']['bcrypt_cost']
@@ -96,7 +98,7 @@ class Auth
      * @param string $hash
      * @return bool
      */
-    private function verifyPassword($password, $hash)
+    private function verifyPassword(string $password, string $hash): bool
     {
         return password_verify($password, $hash);
     }
@@ -105,7 +107,7 @@ class Auth
      * Generate UUID
      * @return string
      */
-    private function generateUuid()
+    private function generateUuid(): string
     {
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
             mt_rand(0, 0xffff), mt_rand(0, 0xffff),
@@ -121,7 +123,7 @@ class Auth
      * @param object $user
      * @return array
      */
-    private function getUserData($user)
+    private function getUserData(object $user): array
     {
         return [
             'id' => $user->uuid,
