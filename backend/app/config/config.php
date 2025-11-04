@@ -17,7 +17,8 @@ return [
     'api' => [
         'version' => 'v1',
         'cors_enabled' => true,
-        'rate_limit' => 1000 // requests per hour
+        'rate_limit' => 1000,
+        'token_expiry' => 604800 // 7 days in seconds
     ],
 
     // Security settings

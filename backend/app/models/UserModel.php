@@ -14,6 +14,7 @@ class UserModel extends Model
      * Find user by email
      * @param string $email
      * @return object|null
+     * @throws Exception
      */
     public function findByEmail(string $email): ?object
     {
@@ -26,6 +27,7 @@ class UserModel extends Model
      * Find user by username
      * @param string $username
      * @return object|null
+     * @throws Exception
      */
     public function findByUsername(string $username): ?object
     {
@@ -39,6 +41,7 @@ class UserModel extends Model
      * @param int $userId
      * @param array $preferences
      * @return bool
+     * @throws Exception
      */
     public function updatePreferences(int $userId, array $preferences): bool
     {
@@ -61,6 +64,7 @@ class UserModel extends Model
      * @param int $userId
      * @param array $options
      * @return array
+     * @throws Exception
      */
     public function getFavorites(int $userId, array $options = []): array
     {
@@ -119,6 +123,7 @@ class UserModel extends Model
      * @param int $userId
      * @param int $bookId
      * @return bool
+     * @throws Exception
      */
     public function isFavorite(int $userId, int $bookId): bool
     {

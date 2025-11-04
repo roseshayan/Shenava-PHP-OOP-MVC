@@ -6,7 +6,6 @@
 
 class Autoloader
 {
-
     /**
      * Register autoloader
      */
@@ -21,12 +20,33 @@ class Autoloader
      */
     public function loadClass(string $className): void
     {
-        // Convert namespace to file path
+        // Remove any namespace
         $className = str_replace('\\', '/', $className);
-        $filePath = APP_PATH . '/' . $className . '.php';
 
-        if (file_exists($filePath)) {
-            require_once $filePath;
+        // Define possible paths with exact file names
+        $paths = [
+            APP_PATH . '/core/' . $className . '.php',
+            APP_PATH . '/controllers/' . $className . '.php',
+            APP_PATH . '/models/' . $className . '.php',
+            APP_PATH . '/middleware/' . $className . '.php',
+
+            // Also try without 'Controller' suffix
+            APP_PATH . '/controllers/' . str_replace('Controller', '', $className) . '.php',
+
+            // For core classes without path
+            APP_PATH . '/' . $className . '.php'
+        ];
+
+        foreach ($paths as $filePath) {
+            if (file_exists($filePath)) {
+                require_once $filePath;
+                return;
+            }
+        }
+
+        // Debug: Show which class is missing
+        if (isset($_GET['debug_autoload'])) {
+            error_log("Autoloader: Class '$className' not found. Searched paths: " . implode(', ', $paths));
         }
     }
 }

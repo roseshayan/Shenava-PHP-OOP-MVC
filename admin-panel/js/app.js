@@ -63,13 +63,13 @@ class ShenavaAdmin {
     // Show notification toast
     static showToast(message, type = 'info', duration = 5000) {
         const toast = $(`
-            <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+            <div class="toast align-items-center bg-${type} border-0" role="alert">
                 <div class="d-flex">
                     <div class="toast-body">
                         <i class="fas fa-${this.getToastIcon(type)} me-2"></i>
                         ${message}
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             </div>
         `);

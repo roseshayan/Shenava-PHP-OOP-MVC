@@ -7,8 +7,16 @@
 define('APP_PATH', dirname(__DIR__) . '/app');
 define('ROOT_PATH', dirname(__DIR__));
 
-// Load autoloader
+// Load ALL core files manually first to avoid autoloader issues
 require_once APP_PATH . '/core/Autoloader.php';
+require_once APP_PATH . '/core/Controller.php';
+require_once APP_PATH . '/core/Database.php';
+require_once APP_PATH . '/core/Model.php';
+require_once APP_PATH . '/core/Router.php';
+require_once APP_PATH . '/core/Auth.php';
+require_once APP_PATH . '/core/ResponseFormatter.php';
+
+// Register autoloader
 $autoloader = new Autoloader();
 $autoloader->register();
 
@@ -46,11 +54,13 @@ try {
     require_once APP_PATH . '/routes/api.php';
 
     $router->dispatch();
+
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'status' => 'error',
         'message' => 'Internal Server Error',
-        'error' => $config['app']['debug'] ? $e->getMessage() : 'Something went wrong'
+        'error' => $config['app']['debug'] ? $e->getMessage() : 'Something went wrong',
+        'trace' => $config['app']['debug'] ? $e->getTraceAsString() : null
     ]);
 }

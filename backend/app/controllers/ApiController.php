@@ -4,15 +4,25 @@
  * Extended by all API controllers
  */
 
-class ApiController extends Controller {
-
+class ApiController extends Controller
+{
     protected Auth $auth;
 
     /**
      * Constructor
      */
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
+
+        // Load required classes manually if autoloader fails
+        if (!class_exists('Auth')) {
+            require_once APP_PATH . '/core/Auth.php';
+        }
+        if (!class_exists('UserModel')) {
+            require_once APP_PATH . '/models/UserModel.php';
+        }
+
         $this->auth = new Auth();
     }
 

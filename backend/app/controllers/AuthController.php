@@ -68,4 +68,27 @@ class AuthController extends ApiController
             return $this->error($e->getMessage());
         }
     }
+
+    /**
+     * Refresh access token
+     */
+    public function refreshToken()
+    {
+        try {
+            $data = $this->getRequestData();
+            $refreshToken = $data['refresh_token'] ?? '';
+
+            if (empty($refreshToken)) {
+                return $this->error('Refresh token is required', 422);
+            }
+
+            // Refresh token
+            $userData = $this->auth->refreshToken($refreshToken);
+
+            return $this->success($userData, 'Token refreshed successfully');
+
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 401);
+        }
+    }
 }
