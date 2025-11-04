@@ -49,3 +49,5 @@ try {
         'error' => $config['debug'] ? $e->getMessage() : null
     ]);
 }
+
+require_once APP_PATH . '/routes/api.php';
