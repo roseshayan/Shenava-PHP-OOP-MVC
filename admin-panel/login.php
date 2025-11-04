@@ -3,6 +3,7 @@
  * Shenava - Admin Login
  */
 
+session_save_path('/tmp');
 session_start();
 
 // Define base paths

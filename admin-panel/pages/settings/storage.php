@@ -2,7 +2,7 @@
 /**
  * Shenava - Storage Settings
  */
-
+session_save_path('/tmp');
 session_start();
 require_once '../../includes/auth-check.php';
 

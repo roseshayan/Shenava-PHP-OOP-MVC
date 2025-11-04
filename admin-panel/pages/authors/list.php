@@ -2,7 +2,7 @@
 /**
  * Shenava - Authors Management
  */
-
+session_save_path('/tmp');
 session_start();
 require_once '../../includes/auth-check.php';
 

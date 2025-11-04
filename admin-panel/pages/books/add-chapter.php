@@ -3,7 +3,7 @@
  * Shenava - Add Chapter to Book
  * This is the file referenced in chapters.php
  */
-
+session_save_path('/tmp');
 session_start();
 require_once '../../includes/auth-check.php';
 

@@ -4,6 +4,7 @@
  * Main Dashboard
  */
 
+session_save_path('/tmp');
 session_start();
 
 // Define base paths
