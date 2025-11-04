@@ -18,7 +18,7 @@
 
 ## 🎯 Overview
 
-Shenava is a comprehensive audiobook platform backend built with Laravel.
+Shenava is a comprehensive audiobook platform backend built with PHP Pure & Vanilla JS.
 This API provides endpoints for user authentication, book management, audio playback, and user preferences.
 
 ### Key Features
@@ -142,21 +142,7 @@ php artisan jwt:secret
 
 ### Create Database
 ```sql
-CREATE DATABASE shenava CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### Run Migrations
-```bash
-# Run SQL file manually
-mysql -u root -p shenava < migrations/001_create_tables.sql
-
-# Or use Laravel migrations
-php artisan migrate
-```
-
-### Seed Sample Data (Optional)
-```bash
-php artisan db:seed
+CREATE DATABASE shenava CHARACTER SET utf8mb4 COLLATE utf8mb4_persian_ci;
 ```
 
 ## 🌐 Server Configuration
@@ -183,7 +169,7 @@ php artisan db:seed
 
 ### Base URL
 ```
-http://shenava.test/api/v1
+http://shenava.test/backend/public
 ```
 
 ### Authentication Header
@@ -325,7 +311,7 @@ Authorization: Bearer {jwt_token}
                 "author": "Author Name",
                 "description": "Book description...",
                 "category": "Fiction",
-                "cover_image": "http://shenava.test/storage/covers/cover.jpg",
+                "cover_image": "http://localhost/shenava/assets/images/books/cover.jpg",
                 "audio_length": 7200,
                 "rating": 4.5,
                 "is_featured": true,
@@ -333,13 +319,13 @@ Authorization: Bearer {jwt_token}
                 "created_at": "2024-01-15T10:30:00.000000Z"
             }
         ],
-        "first_page_url": "http://shenava.test/api/v1/books?page=1",
+        "first_page_url": "http://localhost/shenava/backend/public/books?page=1",
         "from": 1,
         "last_page": 5,
-        "last_page_url": "http://shenava.test/api/v1/books?page=5",
+        "last_page_url": "http://localhost/shenava/backend/public/books?page=5",
         "links": ["..."],
-        "next_page_url": "http://shenava.test/api/v1/books?page=2",
-        "path": "http://shenava.test/api/v1/books",
+        "next_page_url": "http://localhost/shenava/backend/public/books?page=2",
+        "path": "http://localhost/shenava/backend/public/books",
         "per_page": 15,
         "prev_page_url": null,
         "to": 15,
@@ -361,7 +347,7 @@ Authorization: Bearer {jwt_token}
         "author": "Author Name",
         "description": "Full book description...",
         "category": "Fiction",
-        "cover_image": "http://shenava.test/storage/covers/cover.jpg",
+        "cover_image": "http://localhost/shenava/assets/images/books/cover.jpg",
         "audio_length": 7200,
         "rating": 4.5,
         "is_featured": true,
@@ -370,7 +356,7 @@ Authorization: Bearer {jwt_token}
                 "id": 1,
                 "chapter_number": 1,
                 "title": "Chapter 1: The Beginning",
-                "audio_url": "http://shenava.test/storage/audio/chapter1.mp3",
+                "audio_url": "http://localhost/shenava/assets/audio/chapter1.mp3",
                 "duration": 3600,
                 "file_size": 52428800
             }
@@ -400,7 +386,7 @@ Same structure as "Get All Books" but filtered by category.
             "author": "Author Name",
             "description": "Featured book description...",
             "category": "Fiction",
-            "cover_image": "http://shenava.test/storage/covers/featured1.jpg",
+            "cover_image": "http://localhost/shenava/assets/images/books/featured1.jpg",
             "audio_length": 5400,
             "rating": 4.8,
             "is_featured": true,
@@ -428,7 +414,7 @@ Authorization: Bearer {jwt_token}
     "status": "success",
     "data": {
         "chapter_id": 1,
-        "audio_url": "http://shenava.test/storage/audio/chapter1.mp3",
+        "audio_url": "http://localhost/shenava/assets/audio/chapter1.mp3",
         "expires_at": "2024-01-15T11:30:00.000000Z",
         "duration": 3600,
         "file_size": 52428800
@@ -495,7 +481,7 @@ Authorization: Bearer {jwt_token}
                     "id": 1,
                     "title": "The Great Novel",
                     "author": "Author Name",
-                    "cover_image": "http://shenava.test/storage/covers/cover.jpg"
+                    "cover_image": "http://localhost/shenava/assets/images/books/cover.jpg"
                 },
                 "chapter": {
                     "id": 1,
@@ -638,23 +624,23 @@ php artisan test --coverage-html coverage/
 
 ### Using Postman
 1. Import Postman collection from `docs/postman-collection.json`
-2. Set base URL: `http://shenava.test/api/v1`
+2. Set base URL: `http://localhost/shenava/backend/public`
 3. For authenticated endpoints, use the token from login response
 
 ### Example cURL Commands
 ```bash
 # User Registration
-curl -X POST http://shenava.test/api/v1/auth/register \
+curl -X POST http://localhost/shenava/backend/public/auth/register \
   -H "Content-Type: application/json" \
   -d '{"name":"John Doe","email":"john@example.com","password":"password123","password_confirmation":"password123"}'
 
 # User Login
-curl -X POST http://shenava.test/api/v1/auth/login \
+curl -X POST http://localhost/shenava/backend/public/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"john@example.com","password":"password123"}'
 
 # Get Books (with auth)
-curl -X GET http://shenava.test/api/v1/books \
+curl -X GET http://localhost/shenava/backend/public/books \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -742,14 +728,13 @@ APP_DEBUG=true
 
 For technical support:
 1. Check this documentation
-2. Review API logs in `storage/logs/laravel.log`
-3. Create an issue on GitHub repository
-4. Contact development team
+2. Create an issue on GitHub repository
+3. Contact development team
 
 ---
 
 **Version:** 1.0.0  
-**Last Updated:** January 2024  
+**Last Updated:** November 2025  
 **Maintainer:** Shenava Development Team
 ```
 
