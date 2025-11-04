@@ -5,8 +5,17 @@
  */
 
 session_start();
-require_once '../backend/app/core/Database.php';
-require_once '../backend/app/models/UserModel.php';
+
+// Define base paths
+define('BASE_PATH', dirname(__DIR__));
+define('BACKEND_PATH', BASE_PATH . '/backend');
+define('APP_PATH', BACKEND_PATH . '/app');
+
+// Require core files
+require_once BACKEND_PATH . '/app/core/Database.php';
+require_once BACKEND_PATH . '/app/core/Model.php';
+require_once BACKEND_PATH . '/app/models/UserModel.php';
+require_once BACKEND_PATH . '/app/models/BookModel.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
@@ -91,7 +100,7 @@ try {
         }
 
         body {
-            font-family: Vazir, sans-serif;
+            font-family: Vazirmatn FD, sans-serif;
             background-color: #f8f9fa;
         }
 

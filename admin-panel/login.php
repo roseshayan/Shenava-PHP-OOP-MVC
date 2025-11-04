@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         body {
-            font-family: Vazir, sans-serif;
+            font-family: Vazirmatn FD, sans-serif;
             background: linear-gradient(135deg, var(--primary-color) 0%, #00897B 100%);
             min-height: 100vh;
             display: flex;

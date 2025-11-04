@@ -3,6 +3,7 @@
 ## Requirements
 - PHP 8.0+
 - Composer
+- NodeJs(NPM)
 - MySQL 8+
 - Laragon (you said you use Laragon)
 
