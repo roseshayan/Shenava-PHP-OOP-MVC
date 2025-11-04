@@ -19,46 +19,46 @@ $db = new Database();
 $userModel = new UserModel();
 $bookModel = new BookModel();
 
-// Get total counts
-$db->query("SELECT COUNT(*) as total FROM users");
 try {
+    // Get total counts
+    $db->query("SELECT COUNT(*) as total FROM users");
     $totalUsers = $db->single()->total;
 } catch (Exception $e) {
-
+    echo $e->getMessage();
 }
 
-$db->query("SELECT COUNT(*) as total FROM books WHERE is_active = 1");
 try {
+    $db->query("SELECT COUNT(*) as total FROM books WHERE is_active = 1");
     $totalBooks = $db->single()->total;
 } catch (Exception $e) {
-
+    echo $e->getMessage();
 }
 
-$db->query("SELECT COUNT(*) as total FROM categories WHERE is_active = 1");
 try {
+    $db->query("SELECT COUNT(*) as total FROM categories WHERE is_active = 1");
     $totalCategories = $db->single()->total;
 } catch (Exception $e) {
-
+    echo $e->getMessage();
 }
 
-$db->query("SELECT COUNT(*) as total FROM listening_history WHERE DATE(created_at) = CURDATE()");
 try {
+    $db->query("SELECT COUNT(*) as total FROM listening_history WHERE DATE(created_at) = CURDATE()");
     $todayPlays = $db->single()->total;
 } catch (Exception $e) {
-
+    echo $e->getMessage();
 }
 
-// Get recent books
-$db->query("SELECT b.*, a.name as author_name, c.name as category_name 
+try {
+    // Get recent books
+    $db->query("SELECT b.*, a.name as author_name, c.name as category_name 
            FROM books b 
            LEFT JOIN authors a ON b.author_id = a.id 
            LEFT JOIN categories c ON b.category_id = c.id 
            ORDER BY b.created_at DESC 
            LIMIT 5");
-try {
     $recentBooks = $db->resultSet();
 } catch (Exception $e) {
-
+    echo $e->getMessage();
 }
 ?>
 <!DOCTYPE html>

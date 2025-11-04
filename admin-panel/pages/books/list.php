@@ -118,14 +118,14 @@ $categories = $categoryModel->getActiveCategories();
                 <div class="card-body">
                     <form method="GET" class="row g-3">
                         <div class="col-md-4">
-                            <input type="text"
+                            <input aria-label="search" type="text"
                                    name="search"
                                    class="form-control"
                                    placeholder="جستجو در عنوان یا نویسنده..."
                                    value="<?php echo htmlspecialchars($search); ?>">
                         </div>
                         <div class="col-md-3">
-                            <select name="category" class="form-select">
+                            <select aria-label="category" name="category" class="form-select">
                                 <option value="">همه دسته‌بندی‌ها</option>
                                 <?php foreach ($categories as $cat): ?>
                                     <option value="<?php echo $cat->slug; ?>"
