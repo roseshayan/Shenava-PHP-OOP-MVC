@@ -6,6 +6,8 @@
 
 session_start();
 require_once '../includes/auth-check.php';
+// Define base paths
+require_once '../../backend/app/core/Database.php';
 
 if (!isset($_GET['type']) || !isset($_GET['id'])) {
     $_SESSION['error'] = 'پارامترهای لازم ارسال نشده است';

@@ -56,28 +56,9 @@ try {
 } catch (Exception $e) {
     echo $e->getMessage();
 }
+
+$pageTitle = "مدیریت فصل‌ها - شنوا";
 ?>
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدیریت فصل‌ها - شنوا</title>
-
-    <!-- Bootstrap 5 CSS -->
-    <link href="../../../node_modules/bootstrap/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../../node_modules/bootstrap-icons/font/bootstrap-icons.min.css">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="../../../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
-
-    <!-- Vazir Font -->
-    <link href="../../../node_modules/vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.min.css" rel="stylesheet">
-
-    <!-- DataTables -->
-    <link rel="stylesheet" href="../../../node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
-</head>
-<body>
 <?php include '../../includes/header.php'; ?>
 
 <div class="container-fluid">
@@ -242,23 +223,16 @@ try {
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../../node_modules/jquery/dist/jquery.min.js"></script>
-<script src="../../../node_modules/datatables.net/js/dataTables.min.js"></script>
-<script src="../../../node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
-<script src="../../js/app.js"></script>
+<?php include '../../includes/footer.php'; ?>
 
 <script>
     $(document).ready(function () {
         $('#chaptersTable').DataTable({
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fa.json'
+                url: '../../js/Persian.json'
             },
             order: [[0, 'asc']],
             pageLength: 25
         });
     });
 </script>
-</body>
-</html>

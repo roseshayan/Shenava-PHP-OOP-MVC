@@ -14,6 +14,7 @@ class BookModel extends Model
      * Get books with pagination and filters
      * @param array $filters
      * @return array
+     * @throws Exception
      */
     public function getBooks(array $filters = []): array
     {
@@ -68,6 +69,7 @@ class BookModel extends Model
      * Get book by UUID with full details
      * @param string $uuid
      * @return object|null
+     * @throws Exception
      */
     public function getBookByUuid(string $uuid): ?object
     {
@@ -95,6 +97,7 @@ class BookModel extends Model
      * Get book chapters
      * @param int $bookId
      * @return array
+     * @throws Exception
      */
     public function getChapters(int $bookId): array
     {
@@ -107,6 +110,7 @@ class BookModel extends Model
      * Get featured books
      * @param int $limit
      * @return array
+     * @throws Exception
      */
     public function getFeaturedBooks(int $limit = 10): array
     {
@@ -126,6 +130,7 @@ class BookModel extends Model
      * @param string $categorySlug
      * @param array $options
      * @return array
+     * @throws Exception
      */
     public function getBooksByCategory(string $categorySlug, array $options = []): array
     {

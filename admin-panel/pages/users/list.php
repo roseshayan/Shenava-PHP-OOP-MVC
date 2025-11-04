@@ -5,7 +5,12 @@
 
 session_start();
 require_once '../../includes/auth-check.php';
-require_once '../../../backend/app/models/UserModel.php';
+// Define base paths
+define('BASE_PATH', dirname(__DIR__) . '/../..');
+const BACKEND_PATH = BASE_PATH . '/backend';
+require_once BACKEND_PATH . '/app/core/Database.php';
+require_once BACKEND_PATH . '/app/core/Model.php';
+require_once BACKEND_PATH . '/app/models/UserModel.php';
 
 $userModel = new UserModel();
 
@@ -58,28 +63,9 @@ try {
     echo $e->getMessage();
 }
 $totalPages = ceil($totalUsers / $limit);
+
+$pageTitle = "مدیریت کاربران - شنوا";
 ?>
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدیریت کاربران - شنوا</title>
-
-    <!-- Bootstrap 5 CSS -->
-    <link href="../../../node_modules/bootstrap/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../../node_modules/bootstrap-icons/font/bootstrap-icons.min.css">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="../../../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
-
-    <!-- Vazir Font -->
-    <link href="../../../node_modules/vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.min.css" rel="stylesheet">
-
-    <!-- DataTables -->
-    <link rel="stylesheet" href="../../../node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
-</head>
-<body>
 <?php include '../../includes/header.php'; ?>
 
 <div class="container-fluid">
@@ -91,6 +77,10 @@ $totalPages = ceil($totalUsers / $limit);
                 <h1 class="h2">مدیریت کاربران</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <div class="btn-group me-2">
+                        <a href="add.php" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus me-2"></i>
+                            افزودن کاربر
+                        </a>
                         <button type="button" class="btn btn-sm btn-outline-secondary" id="exportUsers">
                             <i class="fas fa-download me-2"></i>
                             خروجی
@@ -379,19 +369,39 @@ $totalPages = ceil($totalUsers / $limit);
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../../node_modules/jquery/dist/jquery.min.js"></script>
-<script src="../../../node_modules/datatables.net/js/dataTables.min.js"></script>
-<script src="../../../node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
-<script src="../../js/app.js"></script>
+<!-- User Profile Modal -->
+<div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">مشاهده پروفایل کاربر</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="userProfileContent">
+                <!-- Content will be loaded via AJAX -->
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">در حال بارگذاری...</span>
+                    </div>
+                    <p class="mt-2 text-muted">در حال بارگذاری اطلاعات کاربر...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                <button type="button" class="btn btn-primary" id="editUserBtn">ویرایش کاربر</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include '../../includes/footer.php'; ?>
 
 <script>
     $(document).ready(function () {
         // Initialize DataTable
         $('#usersTable').DataTable({
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fa.json'
+                url: '../../js/Persian.json'
             },
             ordering: false,
             info: false,
@@ -399,21 +409,66 @@ $totalPages = ceil($totalUsers / $limit);
             paging: false
         });
 
-        // Export users
+        // Export users to Excel
         $('#exportUsers').on('click', function () {
-            ShenavaAdmin.showToast('در حال آماده‌سازی خروجی...', 'info');
-            // Implement export functionality here
+            ShenavaAdmin.showToast('در حال آماده‌سازی خروجی اکسل...', 'info');
+
+            // Create a simple CSV export
+            let csvContent = "data:text/csv;charset=utf-8,\ufeff";
+
+            // Headers
+            csvContent += "نام کاربری,ایمیل,نام نمایشی,وضعیت,نوع کاربر,تاریخ ثبت‌نام\n";
+
+            // Data
+            <?php foreach ($users as $user): ?>
+            csvContent += "<?php echo $user->username; ?>,"
+                + "<?php echo $user->email; ?>,"
+                + "<?php echo $user->display_name ?: '---'; ?>,"
+                + "<?php echo $user->is_active ? 'فعال' : 'غیرفعال'; ?>,"
+                + "<?php echo $user->is_premium ? 'ویژه' : 'عادی'; ?>,"
+                + "<?php echo date('Y/m/d', strtotime($user->created_at)); ?>\n";
+            <?php endforeach; ?>
+
+            // Create download link
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "users_export_<?php echo date('Y-m-d'); ?>.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            ShenavaAdmin.showToast('خروجی با موفقیت دانلود شد', 'success');
         });
     });
 
     function viewUser(userId) {
-        ShenavaAdmin.showToast('در حال بارگذاری اطلاعات کاربر...', 'info');
-        // Implement view user modal
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('userProfileModal'));
+        modal.show();
+
+        // Set edit button URL
+        document.getElementById('editUserBtn').onclick = function () {
+            window.location.href = 'edit.php?id=' + userId;
+        };
+
+        // Load user data via AJAX
+        $.ajax({
+            url: 'get-user-profile.php',
+            type: 'GET',
+            data: {id: userId},
+            success: function (response) {
+                $('#userProfileContent').html(response);
+            },
+            error: function () {
+                $('#userProfileContent').html(
+                    '<div class="alert alert-danger text-center">خطا در بارگذاری اطلاعات کاربر</div>'
+                );
+            }
+        });
     }
 
     function editUser(userId) {
         window.location.href = 'edit.php?id=' + userId;
     }
 </script>
-</body>
-</html>

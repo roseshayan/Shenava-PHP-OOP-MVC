@@ -24,7 +24,7 @@ class CategoriesController extends ApiController
     public function index()
     {
         try {
-            $categories = $this->categoryModel->getActiveCategories();
+            $categories = $this->categoryModel->getCategories();
             return $this->success(['categories' => $categories]);
 
         } catch (Exception $e) {

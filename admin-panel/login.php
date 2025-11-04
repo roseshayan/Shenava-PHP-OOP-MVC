@@ -5,6 +5,11 @@
 
 session_start();
 
+// Define base paths
+define('BASE_PATH', dirname(__DIR__));
+const BACKEND_PATH = BASE_PATH . '/backend';
+require_once BACKEND_PATH . '/app/core/Database.php';
+
 // Check if already logged in
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: index.php');
@@ -15,20 +20,46 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
+    $error = '';
 
-    // Simple hardcoded admin credentials (Change in production!)
-    $admin_username = 'admin';
-    $admin_password = 'admin123'; // Change this!
+    try {
+        $db = new Database();
 
-    if ($username === $admin_username && $password === $admin_password) {
-        $_SESSION['admin_logged_in'] = true;
-        $_SESSION['admin_name'] = 'مدیر سیستم';
-        $_SESSION['login_time'] = time();
+        // Find user by username or email
+        $db->query("SELECT * FROM users WHERE (username = :username OR email = :username) AND is_active = 1");
+        $db->bind(':username', $username);
+        $user = $db->single();
 
-        header('Location: index.php');
-        exit;
-    } else {
-        $error = 'نام کاربری یا رمز عبور اشتباه است';
+        if ($user) {
+            // Check if user is premium
+            if (!$user->is_premium) {
+                $error = 'فقط کاربران ویژه می‌توانند به پنل مدیریت دسترسی داشته باشند';
+            } // Verify password
+            elseif (password_verify($password, $user->password_hash)) {
+                // Login successful
+                $_SESSION['admin_logged_in'] = true;
+                $_SESSION['admin_user_id'] = $user->id;
+                $_SESSION['admin_username'] = $user->username;
+                $_SESSION['admin_name'] = $user->display_name ?: $user->username;
+                $_SESSION['admin_email'] = $user->email;
+                $_SESSION['login_time'] = time();
+
+                // Update last login
+                $db->query("UPDATE users SET last_login_at = NOW(), login_count = COALESCE(login_count, 0) + 1 WHERE id = :id");
+                $db->bind(':id', $user->id);
+                $db->execute();
+
+                header('Location: index.php');
+                exit;
+            } else {
+                $error = 'رمز عبور اشتباه است';
+            }
+        } else {
+            $error = 'کاربری با این مشخصات یافت نشد';
+        }
+    } catch (Exception $e) {
+        $error = 'خطا در ارتباط با سرور. لطفا مجددا تلاش کنید.';
+        error_log("Login error: " . $e->getMessage());
     }
 }
 ?>
@@ -39,6 +70,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ورود به پنل مدیریت - شنوا</title>
 
+    <!-- Meta Description -->
+    <meta name="description"
+          content="شنوا، کتابخانه‌ای آنلاین از کتاب‌های صوتی رایگان است. در شنوا می‌توانید انواع داستان‌های شنیدنی، رمان‌ها، ادبیات کلاسیک و آثار فانتزی را به‌صورت رایگان گوش دهید. هرجا و هرزمان با شنوا همراه باشید.">
+
+    <!-- Meta Keywords -->
+    <meta name="keywords"
+          content="شنوا, کتاب صوتی, رایگان, اپلیکیشن کتاب صوتی, داستان صوتی, رمان صوتی, شنیدن کتاب, Shenava, Free Audiobooks">
+
+    <!-- Open Graph (برای اشتراک‌گذاری در شبکه‌های اجتماعی) -->
+    <meta property="og:title" content="شنوا | کتاب‌های صوتی رایگان و داستانی">
+    <meta property="og:description"
+          content="با شنوا، کتاب‌ها را بشنوید. مجموعه‌ای از داستان‌ها و رمان‌های شنیدنی، همه رایگان و همیشه در دسترس.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://shennava.ir">
+    <meta property="og:image" content="https://shennava.ir/admin-panel/img/logo.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="شنوا | کتاب‌های صوتی رایگان و داستانی">
+    <meta name="twitter:description" content="کتاب‌ها رو بشنو، دنیایی تازه بساز.">
+    <meta name="twitter:image" content="https://shennava.ir/admin-panel/img/logo.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="img/favicon/favicon-96x96.png" sizes="96x96"/>
+    <link rel="icon" type="image/svg+xml" href="img/favicon/favicon.svg"/>
+    <link rel="shortcut icon" href="img/favicon/favicon.ico"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="img/favicon/apple-touch-icon.png"/>
+    <meta name="apple-mobile-web-app-title" content="Shennava"/>
+    <link rel="manifest" href="img/favicon/site.webmanifest"/>
+
     <!-- Bootstrap 5 CSS -->
     <link href="../node_modules/bootstrap/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
 
@@ -48,14 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Vazir Font -->
     <link href="../node_modules/vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.min.css" rel="stylesheet">
 
-    <style>
-        :root {
-            --primary-color: #00BFA5;
-            --accent-color: #FF7043;
-        }
+    <link rel="stylesheet" href="css/style.css">
 
+    <style>
         body {
-            font-family: Vazirmatn FD, sans-serif;
             background: linear-gradient(135deg, var(--primary-color) 0%, #00897B 100%);
             min-height: 100vh;
             display: flex;
@@ -106,6 +163,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: #00897B;
             transform: translateY(-2px);
         }
+
+        .premium-badge {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #000;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -116,7 +183,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="login-header">
                     <i class="fas fa-headphones fa-3x mb-3"></i>
                     <h3>پنل مدیریت شنوا</h3>
-                    <p class="mb-0">لطفا وارد شوید</p>
+                    <p class="mb-0">
+                        <span class="premium-badge">
+                            <i class="fas fa-crown me-1"></i>
+                            ویژه
+                        </span>
+                        دسترسی محدود
+                    </p>
                 </div>
 
                 <div class="login-body">
@@ -130,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <form method="POST" action="">
                         <div class="mb-3">
-                            <label for="username" class="form-label">نام کاربری</label>
+                            <label for="username" class="form-label">نام کاربری یا ایمیل</label>
                             <div class="input-group">
                                     <span class="input-group-text bg-light border-end-0">
                                         <i class="fas fa-user text-muted"></i>
@@ -140,7 +213,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                        id="username"
                                        name="username"
                                        required
-                                       placeholder="نام کاربری خود را وارد کنید">
+                                       value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>"
+                                       placeholder="نام کاربری یا ایمیل خود را وارد کنید">
                             </div>
                         </div>
 
@@ -166,9 +240,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </form>
 
                     <div class="text-center mt-4">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>توجه:</strong> فقط کاربران ویژه می‌توانند وارد پنل مدیریت شوند.
+                        </div>
+
                         <small class="text-muted">
-                            <i class="fas fa-info-circle me-1"></i>
-                            اطلاعات ورود پیش‌فرض: admin / admin123
+                            <i class="fas fa-shield-alt me-1"></i>
+                            دسترسی امن به مدیریت سیستم
                         </small>
                     </div>
                 </div>
@@ -179,5 +258,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!-- Scripts -->
 <script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Focus on username field on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('username').focus();
+    });
+</script>
 </body>
 </html>

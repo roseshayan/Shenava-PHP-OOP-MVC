@@ -1,53 +1,56 @@
 <?php
-
 /**
- * Shenava - Audiobook & Podcast App
- * Main Entry Point
+ * Shenava - Main Entry Point
  */
 
-// Enable error reporting for development
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Define constants
+define('APP_PATH', dirname(__DIR__) . '/app');
+define('ROOT_PATH', dirname(__DIR__));
 
-// Start session
-session_start();
-
-// Define base path
-define('BASE_PATH', dirname(__DIR__));
-const APP_PATH = BASE_PATH . '/app';
-
-// Require autoloader
+// Load autoloader
 require_once APP_PATH . '/core/Autoloader.php';
-
-// Initialize autoloader
 $autoloader = new Autoloader();
 $autoloader->register();
 
 // Load configuration
 $config = require_once APP_PATH . '/config/config.php';
 
-// Handle CORS
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+// Set error reporting
+if ($config['app']['debug']) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 0);
+    error_reporting(0);
+}
 
-// Handle preflight requests
+// Set headers for CORS and JSON
+header('Access-Control-Allow-Origin: *');
+header('Content-Type: application/json; charset=UTF-8');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Max-Age: 3600');
+header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
+
+// Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Initialize router and handle request
+// Initialize router and dispatch
 try {
     $router = new Router();
+
+    // Load API routes
+    require_once APP_PATH . '/routes/api.php';
+
     $router->dispatch();
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'status' => 'error',
-        'message' => 'Internal server error',
-        'error' => $config['debug'] ? $e->getMessage() : null
+        'message' => 'Internal Server Error',
+        'error' => $config['app']['debug'] ? $e->getMessage() : 'Something went wrong'
     ]);
 }
-
-require_once APP_PATH . '/routes/api.php';

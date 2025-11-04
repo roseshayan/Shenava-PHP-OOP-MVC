@@ -8,14 +8,10 @@ session_start();
 
 // Define base paths
 define('BASE_PATH', dirname(__DIR__));
-define('BACKEND_PATH', BASE_PATH . '/backend');
-define('APP_PATH', BACKEND_PATH . '/app');
+const BACKEND_PATH = BASE_PATH . '/backend';
 
 // Require core files
 require_once BACKEND_PATH . '/app/core/Database.php';
-require_once BACKEND_PATH . '/app/core/Model.php';
-require_once BACKEND_PATH . '/app/models/UserModel.php';
-require_once BACKEND_PATH . '/app/models/BookModel.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
@@ -23,51 +19,69 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit;
 }
 
-// Get stats for dashboard
-$db = new Database();
-$userModel = new UserModel();
-$bookModel = new BookModel();
+// Initialize variables
+$totalUsers = $totalBooks = $totalCategories = $todayPlays = 0;
+$recentBooks = [];
 
 try {
-    // Get total counts
-    $db->query("SELECT COUNT(*) as total FROM users");
-    $totalUsers = $db->single()->total;
-} catch (Exception $e) {
-    echo $e->getMessage();
-}
+    // Get stats for dashboard
+    $db = new Database();
 
-try {
-    $db->query("SELECT COUNT(*) as total FROM books WHERE is_active = 1");
-    $totalBooks = $db->single()->total;
-} catch (Exception $e) {
-    echo $e->getMessage();
-}
+    // Get total counts with error handling for each query
+    try {
+        $db->query("SELECT COUNT(*) as total FROM users");
+        $result = $db->single();
+        $totalUsers = $result->total ?? 0;
+    } catch (Exception $e) {
+        error_log("Users count error: " . $e->getMessage());
+        $totalUsers = 0;
+    }
 
-try {
-    $db->query("SELECT COUNT(*) as total FROM categories WHERE is_active = 1");
-    $totalCategories = $db->single()->total;
-} catch (Exception $e) {
-    echo $e->getMessage();
-}
+    try {
+        $db->query("SELECT COUNT(*) as total FROM books WHERE is_active = 1");
+        $result = $db->single();
+        $totalBooks = $result->total ?? 0;
+    } catch (Exception $e) {
+        error_log("Books count error: " . $e->getMessage());
+        $totalBooks = 0;
+    }
 
-try {
-    $db->query("SELECT COUNT(*) as total FROM listening_history WHERE DATE(created_at) = CURDATE()");
-    $todayPlays = $db->single()->total;
-} catch (Exception $e) {
-    echo $e->getMessage();
-}
+    try {
+        $db->query("SELECT COUNT(*) as total FROM categories WHERE is_active = 1");
+        $result = $db->single();
+        $totalCategories = $result->total ?? 0;
+    } catch (Exception $e) {
+        error_log("Categories count error: " . $e->getMessage());
+        $totalCategories = 0;
+    }
 
-try {
-    // Get recent books
-    $db->query("SELECT b.*, a.name as author_name, c.name as category_name 
-           FROM books b 
-           LEFT JOIN authors a ON b.author_id = a.id 
-           LEFT JOIN categories c ON b.category_id = c.id 
-           ORDER BY b.created_at DESC 
-           LIMIT 5");
-    $recentBooks = $db->resultSet();
+    try {
+        $db->query("SELECT COUNT(*) as total FROM listening_history WHERE DATE(created_at) = CURDATE()");
+        $result = $db->single();
+        $todayPlays = $result->total ?? 0;
+    } catch (Exception $e) {
+        error_log("Today plays error: " . $e->getMessage());
+        $todayPlays = 0;
+    }
+
+    try {
+        // Get recent books
+        $db->query("SELECT b.*, a.name as author_name, c.name as category_name 
+               FROM books b 
+               LEFT JOIN authors a ON b.author_id = a.id 
+               LEFT JOIN categories c ON b.category_id = c.id 
+               ORDER BY b.created_at DESC 
+               LIMIT 5");
+        $recentBooks = $db->resultSet();
+    } catch (Exception $e) {
+        error_log("Recent books error: " . $e->getMessage());
+        $recentBooks = [];
+    }
+
 } catch (Exception $e) {
-    echo $e->getMessage();
+    // Log the main database connection error
+    error_log("Database connection failed: " . $e->getMessage());
+    $dbError = "خطا در اتصال به پایگاه داده. لطفا تنظیمات را بررسی کنید.";
 }
 ?>
 <!DOCTYPE html>
@@ -77,6 +91,33 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پنل مدیریت شنوا</title>
 
+    <!-- Meta Description -->
+    <meta name="description" content="شنوا، کتابخانه‌ای آنلاین از کتاب‌های صوتی رایگان است. در شنوا می‌توانید انواع داستان‌های شنیدنی، رمان‌ها، ادبیات کلاسیک و آثار فانتزی را به‌صورت رایگان گوش دهید. هرجا و هرزمان با شنوا همراه باشید.">
+
+    <!-- Meta Keywords -->
+    <meta name="keywords" content="شنوا, کتاب صوتی, رایگان, اپلیکیشن کتاب صوتی, داستان صوتی, رمان صوتی, شنیدن کتاب, Shenava, Free Audiobooks">
+
+    <!-- Open Graph (برای اشتراک‌گذاری در شبکه‌های اجتماعی) -->
+    <meta property="og:title" content="شنوا | کتاب‌های صوتی رایگان و داستانی">
+    <meta property="og:description" content="با شنوا، کتاب‌ها را بشنوید. مجموعه‌ای از داستان‌ها و رمان‌های شنیدنی، همه رایگان و همیشه در دسترس.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://shennava.ir">
+    <meta property="og:image" content="https://shennava.ir/admin-panel/img/logo.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="شنوا | کتاب‌های صوتی رایگان و داستانی">
+    <meta name="twitter:description" content="کتاب‌ها رو بشنو، دنیایی تازه بساز.">
+    <meta name="twitter:image" content="https://shennava.ir/admin-panel/img/logo.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="img/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="img/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="img/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="img/favicon/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Shennava" />
+    <link rel="manifest" href="img/favicon/site.webmanifest" />
+
     <!-- Bootstrap 5 CSS -->
     <link href="../node_modules/bootstrap/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
 
@@ -84,100 +125,19 @@ try {
     <link rel="stylesheet" href="../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
 
     <!-- Vazir Font -->
-    <link href="../node_modules/vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.min.css" rel="stylesheet">
+    <link href="../node_modules/vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.css" rel="stylesheet">
 
-    <!-- Custom CSS -->
-    <link href="css/style.css" rel="stylesheet">
-    <link href="css/dashboard.css" rel="stylesheet">
-
-    <style>
-        :root {
-            --primary-color: #00BFA5;
-            --accent-color: #FF7043;
-            --bg-light: #E3F2FD;
-            --text-primary: #212121;
-            --text-secondary: #757575;
-        }
-
-        body {
-            font-family: Vazirmatn FD, sans-serif;
-            background-color: #f8f9fa;
-        }
-
-        .sidebar {
-            background: linear-gradient(180deg, var(--primary-color) 0%, #00897B 100%);
-            color: white;
-            min-height: 100vh;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            margin: 4px 0;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar .nav-link i {
-            margin-left: 10px;
-        }
-
-        .stat-card {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-card .card-body i {
-            font-size: 2.5rem;
-            opacity: 0.8;
-        }
-
-        .bg-primary-custom {
-            background-color: var(--primary-color) !important;
-        }
-
-        .bg-accent-custom {
-            background-color: var(--accent-color) !important;
-        }
-
-        .btn-primary-custom {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-primary-custom:hover {
-            background-color: #00897B;
-            border-color: #00897B;
-        }
-
-        .navbar-brand {
-            font-weight: bold;
-            font-size: 1.5rem;
-        }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
 <!-- Navigation -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary-custom">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="index.php">
             <i class="fas fa-headphones"></i>
             شنوا - پنل مدیریت
         </a>
-
         <div class="d-flex align-items-center">
             <span class="text-white me-3"><?php echo $_SESSION['admin_name'] ?? 'مدیر'; ?></span>
             <a href="logout.php" class="btn btn-outline-light btn-sm">
@@ -193,40 +153,58 @@ try {
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2 sidebar p-0">
             <div class="p-4">
-                <h5 class="text-center mb-4">منوها</h5>
+                <div class="text-center mb-4">
+                    <i class="fas fa-headphones fa-2x text-white mb-2"></i>
+                    <h6 class="text-white mb-0">شنوا</h6>
+                    <small class="text-white-50">پنل مدیریت</small>
+                </div>
 
                 <nav class="nav flex-column">
                     <a class="nav-link active" href="index.php">
-                        <i class="fas fa-tachometer-alt"></i>
+                        <i class="fas fa-tachometer-alt me-2"></i>
                         داشبورد
                     </a>
+
                     <a class="nav-link" href="pages/books/list.php">
-                        <i class="fas fa-book"></i>
+                        <i class="fas fa-book me-2"></i>
                         مدیریت کتاب‌ها
                     </a>
+
                     <a class="nav-link" href="pages/categories/list.php">
-                        <i class="fas fa-folder"></i>
+                        <i class="fas fa-folder me-2"></i>
                         دسته‌بندی‌ها
                     </a>
+
                     <a class="nav-link" href="pages/users/list.php">
-                        <i class="fas fa-users"></i>
+                        <i class="fas fa-users me-2"></i>
                         کاربران
                     </a>
+
                     <a class="nav-link" href="pages/authors/list.php">
-                        <i class="fas fa-user-edit"></i>
+                        <i class="fas fa-user-edit me-2"></i>
                         نویسندگان
                     </a>
+
                     <a class="nav-link" href="pages/chapters/list.php">
-                        <i class="fas fa-list"></i>
+                        <i class="fas fa-list me-2"></i>
                         فصل‌ها
                     </a>
+
                     <a class="nav-link" href="pages/reviews/list.php">
-                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star me-2"></i>
                         نظرات
                     </a>
+
+                    <div class="sidebar-divider my-3"></div>
+
                     <a class="nav-link" href="pages/settings/general.php">
-                        <i class="fas fa-cog"></i>
+                        <i class="fas fa-cog me-2"></i>
                         تنظیمات
+                    </a>
+
+                    <a class="nav-link" href="pages/reports/dashboard.php">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        گزارشات
                     </a>
                 </nav>
             </div>
@@ -234,15 +212,23 @@ try {
 
         <!-- Main Content -->
         <div class="col-md-9 col-lg-10 ms-sm-auto px-4 py-4">
-            <!-- Page Header -->
+            <!-- Database Error -->
+            <?php if (isset($dbError)): ?>
+                <div class="alert alert-danger">
+                    <h4 class="alert-heading">خطا در اتصال به پایگاه داده</h4>
+                    <p><?php echo $dbError; ?></p>
+                    <hr>
+                    <p class="mb-0">لطفا از موارد زیر اطمینان حاصل کنید:</p>
+                    <ul>
+                        <li>سرور MySQL در حال اجرا است</li>
+                        <li>پایگاه داده 'shenava_db' وجود دارد</li>
+                        <li>نام کاربری و رمز عبور صحیح هستند</li>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">داشبورد</h1>
-                <div class="btn-group">
-                    <button class="btn btn-primary-custom">
-                        <i class="fas fa-sync-alt"></i>
-                        بروزرسانی
-                    </button>
-                </div>
             </div>
 
             <!-- Stats Cards -->
@@ -252,7 +238,7 @@ try {
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-8">
-                                    <h5 class="card-title text-muted mb-2">کل کاربران</h5>
+                                    <h5 class="card-title text-white mb-2">کل کاربران</h5>
                                     <h3 class="mb-0"><?php echo number_format($totalUsers); ?></h3>
                                 </div>
                                 <div class="col-4 text-end">
@@ -268,7 +254,7 @@ try {
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-8">
-                                    <h5 class="card-title text-muted mb-2">کل کتاب‌ها</h5>
+                                    <h5 class="card-title text-white mb-2">کل کتاب‌ها</h5>
                                     <h3 class="mb-0"><?php echo number_format($totalBooks); ?></h3>
                                 </div>
                                 <div class="col-4 text-end">
@@ -284,7 +270,7 @@ try {
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-8">
-                                    <h5 class="card-title text-muted mb-2">دسته‌بندی‌ها</h5>
+                                    <h5 class="card-title text-white mb-2">دسته‌بندی‌ها</h5>
                                     <h3 class="mb-0"><?php echo number_format($totalCategories); ?></h3>
                                 </div>
                                 <div class="col-4 text-end">
@@ -300,7 +286,7 @@ try {
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-8">
-                                    <h5 class="card-title text-muted mb-2">پخش امروز</h5>
+                                    <h5 class="card-title text-white mb-2">پخش امروز</h5>
                                     <h3 class="mb-0"><?php echo number_format($todayPlays); ?></h3>
                                 </div>
                                 <div class="col-4 text-end">
@@ -312,127 +298,25 @@ try {
                 </div>
             </div>
 
-            <!-- Recent Books & Quick Actions -->
-            <div class="row g-4">
-                <!-- Recent Books -->
-                <div class="col-lg-8">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-white border-0">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-clock text-primary me-2"></i>
-                                کتاب‌های اخیر
-                            </h5>
-                        </div>
+            <!-- Quick Actions -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
                         <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                    <tr>
-                                        <th>عنوان</th>
-                                        <th>نویسنده</th>
-                                        <th>دسته‌بندی</th>
-                                        <th>تاریخ</th>
-                                        <th>عملیات</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <?php foreach ($recentBooks as $book): ?>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="<?php echo $book->cover_image ?: '../assets/images/default-book.jpg'; ?>"
-                                                         alt="<?php echo $book->title; ?>"
-                                                         class="rounded me-3"
-                                                         width="40" height="40">
-                                                    <div>
-                                                        <h6 class="mb-0"><?php echo $book->title; ?></h6>
-                                                        <small class="text-muted"><?php echo $book->is_featured ? 'ویژه' : 'عادی'; ?></small>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td><?php echo $book->author_name ?: '---'; ?></td>
-                                            <td>
-                                                <span class="badge bg-primary"><?php echo $book->category_name; ?></span>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted"><?php echo date('Y/m/d', strtotime($book->created_at)); ?></small>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <button class="btn btn-outline-primary" title="مشاهده">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <button class="btn btn-outline-warning" title="ویرایش">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="col-lg-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-white border-0">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-bolt text-warning me-2"></i>
-                                اقدامات سریع
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <a href="pages/books/add.php" class="btn btn-primary-custom btn-lg">
+                            <h5 class="card-title">اقدامات سریع</h5>
+                            <div class="d-grid gap-2 d-md-flex">
+                                <a href="pages/books/add.php" class="btn btn-primary-custom me-2">
                                     <i class="fas fa-plus me-2"></i>
                                     افزودن کتاب جدید
                                 </a>
-                                <a href="pages/categories/add.php" class="btn btn-outline-primary btn-lg">
+                                <a href="pages/categories/add.php" class="btn btn-outline-primary me-2">
                                     <i class="fas fa-folder-plus me-2"></i>
                                     افزودن دسته‌بندی
                                 </a>
-                                <a href="pages/authors/add.php" class="btn btn-outline-success btn-lg">
+                                <a href="pages/authors/add.php" class="btn btn-outline-success">
                                     <i class="fas fa-user-plus me-2"></i>
                                     افزودن نویسنده
                                 </a>
-                                <a href="pages/chapters/add.php" class="btn btn-outline-info btn-lg">
-                                    <i class="fas fa-file-audio me-2"></i>
-                                    افزودن فصل
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- System Status -->
-                    <div class="card border-0 shadow-sm mt-4">
-                        <div class="card-header bg-white border-0">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-server text-info me-2"></i>
-                                وضعیت سیستم
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="list-group list-group-flush">
-                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                                    <span>وضعیت سرور</span>
-                                    <span class="badge bg-success">فعال</span>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                                    <span>پایگاه داده</span>
-                                    <span class="badge bg-success">متصل</span>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                                    <span>فضای ذخیره‌سازی</span>
-                                    <span class="badge bg-warning">75%</span>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                                    <span>ورژن سیستم</span>
-                                    <span class="badge bg-primary">1.0.0</span>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -444,8 +328,5 @@ try {
 
 <!-- Scripts -->
 <script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../node_modules/jquery/dist/jquery.min.js"></script>
-<script src="js/app.js"></script>
-<script src="js/dashboard.js"></script>
 </body>
 </html>

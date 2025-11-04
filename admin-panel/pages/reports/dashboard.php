@@ -94,31 +94,9 @@ try {
 } catch (Exception $e) {
     echo $e->getMessage();
 }
+
+$pageTitle = "گزارشات و آمار - شنوا";
 ?>
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>گزارشات و آمار - شنوا</title>
-
-    <!-- Bootstrap 5 CSS -->
-    <link href="../../../node_modules/bootstrap/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../../node_modules/bootstrap-icons/font/bootstrap-icons.min.css">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="../../../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
-
-    <!-- Vazir Font -->
-    <link href="../../../node_modules/vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.min.css" rel="stylesheet">
-
-    <!-- DataTables -->
-    <link rel="stylesheet" href="../../../node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
-
-    <!-- Chart.js -->
-    <script src="../../../node_modules/chart.js/dist/chart.js"></script>
-</head>
-<body>
 <?php include '../../includes/header.php'; ?>
 
 <div class="container-fluid">
@@ -187,7 +165,7 @@ try {
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h3 class="mb-0"><?php echo number_format($totalUsers); ?></h3>
+                                    <h3 class="mb-0"><?php echo isset($totalUsers) ? number_format($totalUsers) : 0; ?></h3>
                                     <small>کل کاربران</small>
                                 </div>
                                 <i class="fas fa-users fa-2x opacity-50"></i>
@@ -223,25 +201,11 @@ try {
                 </div>
 
                 <div class="col-xl-2 col-md-4 col-sm-6">
-                    <div class="card stat-card bg-info text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h3 class="mb-0"><?php echo number_format($totalChapters); ?></h3>
-                                    <small>کل فصل‌ها</small>
-                                </div>
-                                <i class="fas fa-list fa-2x opacity-50"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-2 col-md-4 col-sm-6">
                     <div class="card stat-card bg-warning text-dark">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h3 class="mb-0"><?php echo number_format($totalPlays); ?></h3>
+                                    <h3 class="mb-0"><?php echo isset($totalPlays) ? number_format($totalPlays) : 0; ?></h3>
                                     <small>کل پخش‌ها</small>
                                 </div>
                                 <i class="fas fa-play-circle fa-2x opacity-50"></i>
@@ -251,6 +215,20 @@ try {
                                     <i class="fas fa-arrow-up me-1"></i>
                                     <?php echo number_format($recentPlays); ?> در ۳۰ روز گذشته
                                 </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-2 col-md-4 col-sm-6">
+                    <div class="card stat-card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="mb-0"><?php echo number_format($totalChapters); ?></h3>
+                                    <small>کل فصل‌ها</small>
+                                </div>
+                                <i class="fas fa-list fa-2x opacity-50"></i>
                             </div>
                         </div>
                     </div>
@@ -365,7 +343,8 @@ try {
                                             <div>
                                                 <h6 class="mb-1"><?php echo $activity->username; ?></h6>
                                                 <p class="mb-1 text-muted">
-                                                    <?php echo $activity->book_title; ?> - <?php echo $activity->chapter_title; ?>
+                                                    <?php echo $activity->book_title; ?>
+                                                    - <?php echo $activity->chapter_title; ?>
                                                 </p>
                                                 <small class="text-muted">
                                                     <?php
@@ -428,54 +407,54 @@ try {
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../../node_modules/jquery/dist/jquery.min.js"></script>
-<script src="../../js/app.js"></script>
+<?php include '../../includes/footer.php'; ?>
 
 <script>
-    $(document).ready(function() {
-        // User Growth Chart
-        const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
-        const userGrowthChart = new Chart(userGrowthCtx, {
-            type: 'bar',
-            data: {
-                labels: [<?php
-                    $labels = [];
-                    foreach ($userGrowth as $growth) {
-                        $labels[] = "'" . date('m/d', strtotime($growth->date)) . "'";
-                    }
-                    echo implode(', ', $labels);
-                    ?>],
-                datasets: [{
-                    label: 'کاربران جدید',
-                    data: [<?php
-                        $data = [];
+    $(document).ready(function () {
+        // بررسی وجود المنت نمودار قبل از ایجاد
+        const userGrowthCanvas = document.getElementById('userGrowthChart');
+        if (userGrowthCanvas) {
+            const userGrowthCtx = userGrowthCanvas.getContext('2d');
+            const userGrowthChart = new Chart(userGrowthCtx, {
+                type: 'bar',
+                data: {
+                    labels: [<?php
+                        $labels = [];
                         foreach ($userGrowth as $growth) {
-                            $data[] = $growth->count;
+                            $labels[] = "'" . date('m/d', strtotime($growth->date)) . "'";
                         }
-                        echo implode(', ', $data);
+                        echo implode(', ', $labels);
                         ?>],
-                    backgroundColor: '#00BFA5',
-                    borderColor: '#00897B',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
+                    datasets: [{
+                        label: 'کاربران جدید',
+                        data: [<?php
+                            $data = [];
+                            foreach ($userGrowth as $growth) {
+                                $data[] = $growth->count;
+                            }
+                            echo implode(', ', $data);
+                            ?>],
+                        backgroundColor: '#00BFA5',
+                        borderColor: '#00897B',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Export report
-        $('#exportReport').on('click', function() {
+        $('#exportReport').on('click', function () {
             ShenavaAdmin.showToast('در حال تولید گزارش Excel...', 'info');
             // Implement export functionality
         });
@@ -493,5 +472,3 @@ try {
         transform: translateY(-5px);
     }
 </style>
-</body>
-</html>

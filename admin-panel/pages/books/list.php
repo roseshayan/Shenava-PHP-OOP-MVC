@@ -5,8 +5,14 @@
 
 session_start();
 require_once '../../includes/auth-check.php';
-require_once '../../../backend/app/models/BookModel.php';
-require_once '../../../backend/app/models/CategoryModel.php';
+
+// Define base paths
+define('BASE_PATH', dirname(__DIR__) . '/../..');
+const BACKEND_PATH = BASE_PATH . '/backend';
+require_once BACKEND_PATH . '/app/core/Database.php';
+require_once BACKEND_PATH . '/app/core/Model.php';
+require_once BACKEND_PATH . '/app/models/BookModel.php';
+require_once BACKEND_PATH . '/app/models/CategoryModel.php';
 
 $bookModel = new BookModel();
 $categoryModel = new CategoryModel();
@@ -32,8 +38,9 @@ if ($category) {
     $params[':category'] = $category;
 }
 
-// Get books
-$sql = "SELECT b.*, a.name as author_name, c.name as category_name, c.slug as category_slug
+try {
+    // Get books
+    $sql = "SELECT b.*, a.name as author_name, c.name as category_name, c.slug as category_slug
         FROM books b
         LEFT JOIN authors a ON b.author_id = a.id
         LEFT JOIN categories c ON b.category_id = c.id
@@ -41,62 +48,50 @@ $sql = "SELECT b.*, a.name as author_name, c.name as category_name, c.slug as ca
         ORDER BY b.created_at DESC
         LIMIT $limit OFFSET $offset";
 
-$db = new Database();
-$db->query($sql);
-foreach ($params as $key => $value) {
-    $db->bind($key, $value);
+    $db = new Database();
+    $db->query($sql);
+    foreach ($params as $key => $value) {
+        $db->bind($key, $value);
+    }
+    $books = $db->resultSet();
+} catch (Exception $e) {
+    die($e->getMessage());
 }
-$books = $db->resultSet();
 
-// Get total count
-$countSql = "SELECT COUNT(*) as total FROM books b
+try {
+    // Get total count
+    $countSql = "SELECT COUNT(*) as total FROM books b
              LEFT JOIN authors a ON b.author_id = a.id
              LEFT JOIN categories c ON b.category_id = c.id
              $where";
-$db->query($countSql);
-foreach ($params as $key => $value) {
-    $db->bind($key, $value);
+    $db->query($countSql);
+    foreach ($params as $key => $value) {
+        $db->bind($key, $value);
+    }
+    $totalBooks = $db->single()->total;
+    $totalPages = ceil($totalBooks / $limit);
+} catch (Exception $e) {
+    die($e->getMessage());
 }
-$totalBooks = $db->single()->total;
-$totalPages = ceil($totalBooks / $limit);
 
 // Get categories for filter
-$categories = $categoryModel->getActiveCategories();
+$categories = $categoryModel->getCategories();
+
+$pageTitle = "مدیریت کتاب‌ها - شنوا";
 ?>
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدیریت کتاب‌ها - شنوا</title>
-
-    <!-- Bootstrap 5 CSS -->
-    <link href="../../../node_modules/bootstrap/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="../../../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
-
-    <!-- Vazir Font -->
-    <link href="../../../node_modules/vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.min.css" rel="stylesheet">
-
-    <!-- DataTables -->
-    <link rel="stylesheet" href="../../../node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
-
-    <style>
-        .table-actions {
-            white-space: nowrap;
-        }
-
-        .book-cover {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-    </style>
-</head>
-<body>
 <?php include '../../includes/header.php'; ?>
+<style>
+    .table-actions {
+        white-space: nowrap;
+    }
+
+    .book-cover {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+</style>
 
 <div class="container-fluid">
     <div class="row">
@@ -129,7 +124,7 @@ $categories = $categoryModel->getActiveCategories();
                                 <option value="">همه دسته‌بندی‌ها</option>
                                 <?php foreach ($categories as $cat): ?>
                                     <option value="<?php echo $cat->slug; ?>"
-                                        <?php echo $category === $cat->slug ? 'selected' : ''; ?>>
+                                            <?php echo $category === $cat->slug ? 'selected' : ''; ?>>
                                         <?php echo $cat->name; ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -266,19 +261,14 @@ $categories = $categoryModel->getActiveCategories();
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../../node_modules/jquery/dist/jquery.min.js"></script>
-<script src="../../../node_modules/datatables.net/js/dataTables.min.js"></script>
-<script src="../../../node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
-<script src="../../js/app.js"></script>
+<?php include '../../includes/footer.php'; ?>
 
 <script>
     $(document).ready(function () {
         // Initialize DataTable
         $('#booksTable').DataTable({
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/fa.json'
+                url: '../../js/Persian.json'
             },
             ordering: false, // Disable default sorting
             info: false, // Remove "Showing X of Y entries"
@@ -287,5 +277,3 @@ $categories = $categoryModel->getActiveCategories();
         });
     });
 </script>
-</body>
-</html>

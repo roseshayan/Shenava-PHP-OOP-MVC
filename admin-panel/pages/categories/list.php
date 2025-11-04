@@ -5,10 +5,15 @@
 
 session_start();
 require_once '../../includes/auth-check.php';
-require_once '../../../backend/app/models/CategoryModel.php';
+// Define base paths
+define('BASE_PATH', dirname(__DIR__) . '/../..');
+const BACKEND_PATH = BASE_PATH . '/backend';
+require_once BACKEND_PATH . '/app/core/Database.php';
+require_once BACKEND_PATH . '/app/core/Model.php';
+require_once BACKEND_PATH . '/app/models/CategoryModel.php';
 
 $categoryModel = new CategoryModel();
-$categories = $categoryModel->getActiveCategories();
+$categories = $categoryModel->getCategories();
 
 // Handle actions
 if (isset($_GET['action']) && isset($_GET['id'])) {
@@ -57,53 +62,46 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     header('Location: list.php');
     exit;
 }
+
+$pageTitle = "مدیریت دسته‌بندی‌ها - شنوا";
 ?>
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدیریت دسته‌بندی‌ها - شنوا</title>
-
-    <!-- Bootstrap 5 CSS -->
-    <link href="../../../node_modules/bootstrap/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../../node_modules/bootstrap-icons/font/bootstrap-icons.min.css">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="../../../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
-
-    <!-- Vazir Font -->
-    <link href="../../../node_modules/vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.min.css" rel="stylesheet">
-
-    <style>
-        .category-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border: none;
-            border-radius: 12px;
-        }
-
-        .category-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .category-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 8px;
-        }
-
-        .actions-dropdown {
-            position: absolute;
-            left: 15px;
-            top: 15px;
-        }
-    </style>
-</head>
-<body>
 <?php include '../../includes/header.php'; ?>
+<style>
+    .category-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+        border-radius: 12px;
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .category-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 8px;
+    }
+
+    .actions-dropdown {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+    }
+
+    .category-description {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.4;
+        max-height: 4.2em;
+    }
+
+</style>
 
 <div class="container-fluid">
     <div class="row">
@@ -199,7 +197,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
 
                                     <h5 class="card-title"><?php echo $category->name; ?></h5>
 
-                                    <p class="card-text text-muted small">
+                                    <p class="card-text text-muted small category-description">
                                         <?php echo $category->description ?: 'بدون توضیحات'; ?>
                                     </p>
 
@@ -209,6 +207,12 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                                             <?php echo $category->book_count; ?> کتاب
                                         </span>
                                         <span>
+                                            <?php if ($category->parent_name): ?>
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-level-up-alt me-1"></i>
+                                                    <?php echo $category->parent_name; ?>
+                                                </span>
+                                            <?php endif; ?>
                                             <span class="category-color"
                                                   style="background-color: <?php echo $category->color; ?>"></span>
                                             رنگ
@@ -257,10 +261,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../../node_modules/jquery/dist/jquery.min.js"></script>
-<script src="../../js/app.js"></script>
+<?php include '../../includes/footer.php'; ?>
 
 <style>
     .border-dashed {
@@ -272,5 +273,3 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         color: var(--primary-color) !important;
     }
 </style>
-</body>
-</html>

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Shenava - Database Class
  * PDO wrapper for database operations
@@ -7,10 +6,9 @@
 
 class Database
 {
-
     private PDO $pdo;
     private $stmt;
-    private string $error;
+    private $error;
 
     /**
      * Constructor - connect to database
@@ -18,39 +16,51 @@ class Database
      */
     public function __construct()
     {
-        $config = require_once APP_PATH . '/config/database.php';
-
-        $dsn = "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']}";
-        $options = [
-            PDO::ATTR_PERSISTENT => true,
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
-        ];
-
         try {
+            // Load config directly to avoid path issues
+            $config = [
+                'host' => 'localhost',
+                'database' => 'shenava_db',
+                'username' => 'root',
+                'password' => '',
+                'charset' => 'utf8'
+            ];
+
+            $dsn = "mysql:host={$config['host']};dbname={$config['database']}";
+            $options = [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+                PDO::ATTR_PERSISTENT => false // Non-persistent for better error handling
+            ];
+
             $this->pdo = new PDO($dsn, $config['username'], $config['password'], $options);
+
+            // Set charset separately
+            $this->pdo->exec("SET NAMES '{$config['charset']}'");
+
         } catch (PDOException $e) {
-            $this->error = $e->getMessage();
-            throw new Exception("Database connection failed: " . $this->error);
+            // More detailed error message
+            $errorMsg = "Database connection failed: " . $e->getMessage();
+            $errorMsg .= "\nPlease check:";
+            $errorMsg .= "\n- MySQL server is running";
+            $errorMsg .= "\n- Database 'shenava_db' exists";
+            $errorMsg .= "\n- Username/password are correct";
+            throw new Exception($errorMsg);
         }
     }
 
     /**
      * Prepare statement
-     * @param string $sql
      */
-    public function query(string $sql): void
+    public function query($sql): void
     {
         $this->stmt = $this->pdo->prepare($sql);
     }
 
     /**
      * Bind parameters
-     * @param mixed $param
-     * @param mixed $value
-     * @param int|null $type
      */
-    public function bind(mixed $param, mixed $value, int $type = null): void
+    public function bind($param, $value, $type = null): void
     {
         if (is_null($type)) {
             $type = match (true) {
@@ -60,16 +70,14 @@ class Database
                 default => PDO::PARAM_STR,
             };
         }
-
         $this->stmt->bindValue($param, $value, $type);
     }
 
     /**
      * Execute prepared statement
-     * @return bool
      * @throws Exception
      */
-    public function execute(): bool
+    public function execute()
     {
         try {
             return $this->stmt->execute();
@@ -80,10 +88,9 @@ class Database
 
     /**
      * Get result set as array
-     * @return array
      * @throws Exception
      */
-    public function resultSet(): array
+    public function resultSet()
     {
         $this->execute();
         return $this->stmt->fetchAll();
@@ -91,10 +98,9 @@ class Database
 
     /**
      * Get a single record
-     * @return object
      * @throws Exception
      */
-    public function single(): object
+    public function single()
     {
         $this->execute();
         return $this->stmt->fetch();
@@ -102,43 +108,17 @@ class Database
 
     /**
      * Get row count
-     * @return int
      */
-    public function rowCount(): int
+    public function rowCount()
     {
         return $this->stmt->rowCount();
     }
 
     /**
      * Get last insert ID
-     * @return string
      */
-    public function lastInsertId(): string
+    public function lastInsertId(): bool|string
     {
         return $this->pdo->lastInsertId();
-    }
-
-    /**
-     * Begin transaction
-     */
-    public function beginTransaction(): bool
-    {
-        return $this->pdo->beginTransaction();
-    }
-
-    /**
-     * Commit transaction
-     */
-    public function commit(): bool
-    {
-        return $this->pdo->commit();
-    }
-
-    /**
-     * Rollback transaction
-     */
-    public function rollback(): bool
-    {
-        return $this->pdo->rollback();
     }
 }

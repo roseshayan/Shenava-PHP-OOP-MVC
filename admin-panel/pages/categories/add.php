@@ -6,6 +6,23 @@
 session_start();
 require_once '../../includes/auth-check.php';
 
+// Define base paths
+define('BASE_PATH', dirname(__DIR__) . '/../..');
+const BACKEND_PATH = BASE_PATH . '/backend';
+require_once BACKEND_PATH . '/app/core/Database.php';
+require_once BACKEND_PATH . '/app/core/Model.php';
+require_once BACKEND_PATH . '/app/models/CategoryModel.php';
+
+$db = new Database();
+$categoryModel = new CategoryModel();
+
+// Get parent categories for dropdown
+try {
+    $parentCategories = $categoryModel->getParentCategories();
+} catch (Exception $e) {
+    die($e->getMessage());
+}
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
@@ -13,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description']);
     $color = $_POST['color'] ?? '#00BFA5';
     $sort_order = intval($_POST['sort_order'] ?? 0);
+    $parent_id = !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null; // اضافه شدن parent_id
 
     // Validate
     $errors = [];
@@ -27,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         // Check if slug exists
-        $db = new Database();
         $db->query("SELECT id FROM categories WHERE slug = :slug");
         $db->bind(':slug', $slug);
         if ($db->single()) {
@@ -40,11 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         // Generate UUID
         $uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0x0fff) | 0x4000,
-            mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
         );
 
         // Handle file upload
@@ -65,9 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         try {
-            // Insert category
-            $db->query("INSERT INTO categories (uuid, name, slug, description, cover_image, color, sort_order) 
-                   VALUES (:uuid, :name, :slug, :description, :cover_image, :color, :sort_order)");
+            // Insert category - parent_id اضافه شد
+            $db->query("INSERT INTO categories (uuid, name, slug, description, cover_image, color, sort_order, parent_id) 
+                   VALUES (:uuid, :name, :slug, :description, :cover_image, :color, :sort_order, :parent_id)");
 
             $db->bind(':uuid', $uuid);
             $db->bind(':name', $name);
@@ -76,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->bind(':cover_image', $cover_image);
             $db->bind(':color', $color);
             $db->bind(':sort_order', $sort_order);
+            $db->bind(':parent_id', $parent_id);
 
             if ($db->execute()) {
                 $_SESSION['success'] = 'دسته‌بندی با موفقیت ایجاد شد';
@@ -89,28 +107,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+$pageTitle = "افزودن دسته‌بندی - شنوا";
 ?>
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>افزودن دسته‌بندی - شنوا</title>
-
-    <!-- Bootstrap 5 CSS -->
-    <link href="../../../node_modules/bootstrap/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../../node_modules/bootstrap-icons/font/bootstrap-icons.min.css">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="../../../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
-
-    <!-- Vazir Font -->
-    <link href="../../../node_modules/vazirmatn/misc/Farsi-Digits/Vazirmatn-FD-font-face.min.css" rel="stylesheet">
-
-    <!-- Color Picker -->
-    <link rel="stylesheet" href="../../../node_modules/@simonwep/pickr/dist/themes/classic.min.css">
-</head>
-<body>
 <?php include '../../includes/header.php'; ?>
 
 <div class="container-fluid">
@@ -180,6 +178,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </div>
 
                                         <div class="mb-3">
+                                            <label for="parent_id" class="form-label">دسته‌بندی والد</label>
+                                            <select class="form-select" id="parent_id" name="parent_id">
+                                                <option value="">بدون والد (دسته‌بندی اصلی)</option>
+                                                <?php foreach ($parentCategories as $parentCat): ?>
+                                                    <option value="<?php echo $parentCat->id; ?>"
+                                                            <?php echo (isset($_POST['parent_id']) && $_POST['parent_id'] == $parentCat->id) ? 'selected' : ''; ?>>
+                                                        <?php echo $parentCat->name; ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <div class="form-text">در صورت انتخاب، این دسته‌بندی به عنوان زیرمجموعه
+                                                نمایش داده می‌شود
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
                                             <label for="description" class="form-label">توضیحات</label>
                                             <textarea class="form-control"
                                                       id="description"
@@ -233,7 +247,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </div>
 
                                         <div id="imagePreview" class="mt-3 text-center" style="display: none;">
-                                            <img id="preview" class="img-thumbnail" style="max-height: 150px;" alt="imagePreview">
+                                            <img id="preview" class="img-thumbnail" style="max-height: 150px;"
+                                                 alt="imagePreview">
                                         </div>
                                     </div>
                                 </div>
@@ -285,11 +300,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="../../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../../node_modules/jquery/dist/jquery.min.js"></script>
-<script src="../../../node_modules/@simonwep/pickr/dist/pickr.min.js"></script>
-<script src="../../js/app.js"></script>
+<?php include '../../includes/footer.php'; ?>
 
 <script>
     $(document).ready(function () {
@@ -297,7 +308,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const pickr = Pickr.create({
             el: '#colorPicker',
             theme: 'classic',
-            default: '<?php echo $_POST['color'] ?? '#00BFA5'; ?>',
+            default: '#00BFA5',
             swatches: [
                 '#00BFA5', '#FF7043', '#2196F3', '#4CAF50', '#FFC107',
                 '#9C27B0', '#F44336', '#607D8B', '#795548', '#00BCD4'
@@ -321,7 +332,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         pickr.on('save', (color) => {
             $('#color').val(color.toHEXA().toString());
+            pickr.hide();
         });
+
+        // Display the currently selected color
+        pickr.setColor($('#color').val());
 
         // Generate slug from name
         $('#name').on('blur', function () {
@@ -373,5 +388,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
     });
 </script>
-</body>
-</html>

@@ -9,7 +9,6 @@ return [
     'database' => 'shenava_db',
     'username' => 'root',
     'password' => '',
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_persian_ci',
+    'charset' => 'utf8', // حتما utf8 باشه
     'prefix' => ''
 ];
